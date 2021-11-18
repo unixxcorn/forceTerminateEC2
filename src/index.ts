@@ -15,6 +15,7 @@ async function main() {
             throw new Error('Cannot fetch regions');
 
         }
+        const terminatableState = ['running', 'pending', 'stopping', 'stopped']
 
         // Create Array of Instance
         const allRegionsInstances: {
@@ -55,21 +56,24 @@ async function main() {
                         for (const instanceList of instances) {
                             if (instanceList.Instances) {
                                 for (const instance of instanceList.Instances) {
-                                    const mappedData = {
-                                        InstanceId: instance.InstanceId || '-',
-                                        InstanceType: instance.InstanceType || '-',
-                                        Name: instance.Tags?.find(row => row.Key == 'Name')?.Value || '-',
-                                        Region: region,
-                                        Owner: instanceList.OwnerId || '-',
-                                        KeyPairName: instance.KeyName || "-",
-                                        AZ: instance.Placement?.AvailabilityZone || "-",
-                                        IP: instance.PrivateIpAddress || "-",
-                                        VPC: instance.VpcId || "-",
-                                        Hypervisor: instance.Hypervisor || "Unknown",
-                                        State: instance.State?.Name || 'Unknown',
-                                        LaunchTime: moment(instance.LaunchTime).format("YYYY:MM:DD HH:MM:SS ZZ")
+                                    // Only 'running' 'pending' 'stopping' and 'stopped' can be stop
+                                    if(instance.State?.Name && terminatableState.includes(instance.State.Name)){
+                                        const mappedData = {
+                                            InstanceId: instance.InstanceId || '-',
+                                            InstanceType: instance.InstanceType || '-',
+                                            Name: instance.Tags?.find(row => row.Key == 'Name')?.Value || '-',
+                                            Region: region,
+                                            Owner: instanceList.OwnerId || '-',
+                                            KeyPairName: instance.KeyName || "-",
+                                            AZ: instance.Placement?.AvailabilityZone || "-",
+                                            IP: instance.PrivateIpAddress || "-",
+                                            VPC: instance.VpcId || "-",
+                                            Hypervisor: instance.Hypervisor || "Unknown",
+                                            State: instance.State?.Name || 'Unknown',
+                                            LaunchTime: moment(instance.LaunchTime).format("YYYY:MM:DD HH:MM:SS ZZ")
+                                        }
+                                        allRegionsInstances.push(mappedData)
                                     }
-                                    allRegionsInstances.push(mappedData)
                                 }
                             }
                         }
