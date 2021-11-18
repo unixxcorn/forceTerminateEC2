@@ -5,6 +5,7 @@ import cliProgress from 'cli-progress'
 
 async function main() {
     try {
+        // Fetch regions list
         const [regions] = await Promise.all([
             regionsList(),
         ]).then(([regions]) => {
@@ -14,6 +15,8 @@ async function main() {
             throw new Error('Cannot fetch regions');
 
         }
+
+        // Create Array of Instance
         const allRegionsInstances: {
             InstanceId: string,
             InstanceType: string,
@@ -28,6 +31,8 @@ async function main() {
             State: string,
             LaunchTime: string,
         }[] = []
+
+        // Start prompt
         inquirer
             .prompt([
                 {
@@ -38,9 +43,12 @@ async function main() {
                 },
             ])
             .then(async (selected) => {
+                // Start progression bar
                 const regionsListingBar = new cliProgress.SingleBar({}, cliProgress.Presets.shades_classic);
                 console.log("Loading instances from selected regions")
                 regionsListingBar.start(selected.regions.length, 0)
+
+                // Fetch instances in each regions and remap object
                 for (const region of selected.regions) {
                     const instances = (await listInstances(region))?.Reservations
                     if (instances) {
@@ -71,6 +79,7 @@ async function main() {
                 regionsListingBar.stop()
                 console.table(allRegionsInstances, ['Name', 'InstanceType', 'InstanceId', 'AZ', 'KeyPairName','LaunchTime'])
             }).then(() => {
+                // Prompt for Instance you want to remove
                 inquirer
                 .prompt([
                     {
@@ -81,13 +90,16 @@ async function main() {
                     },
                 ])
                 .then((selected) => {
+                    // Get instance ID as string
                     const instances = selected.instances.map((instance:string) => instance.split('\x1b[33m')[0].split('\x1b[32m')[1])
                     const terminationBar = new cliProgress.SingleBar({}, cliProgress.Presets.shades_classic);
                     terminationBar.start(instances.length, 0)
+
+                    // Terminate each selected instances
                     for (const instance of instances) {
+                        // Get instance Object from ID
                         const instanceObject = allRegionsInstances.find(ins => ins.InstanceId == instance)
                         if(instanceObject){
-                            // console.table(allRegionsInstances.find(ins => ins.InstanceId == instance))
                             terminateInstances(instanceObject.InstanceId, instanceObject.Region)
                         }
                         terminationBar.increment()
