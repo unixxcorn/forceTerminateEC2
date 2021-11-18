@@ -12,7 +12,7 @@ Force delete EC2 instances with "termination protection" from any regions.
 ```console
 npm install
 ```
-3. Create `credentials.json` from this example:
+3. Create `credential.json` from this example:
 ```json
 {
     "accessKeyId": "AKIAXXXXXXXX",
